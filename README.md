@@ -20,6 +20,8 @@ animation-strip-generator test/input test/output --name bell --fps 30
 
 The above command will read the image sequence from `test/input` and create a strip at `test/input/bell.png`. The strip is then pushed through [pngquant](https://pngquant.org/) for great compression. You also get the necessary CSS styles for the sprite animation.
 
+![](https://github.com/karriereat/animation-strip-generator/blob/master/test/output/bell.png)
+
 ```css
 .animation {
     width: 109px;
