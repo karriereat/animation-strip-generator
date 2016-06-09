@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        .animation {
+            width: {{ frameWidth }}px;
+            height: {{ frameHeight }}px;
+            background: url({{ file }}) left center;
+            animation: play {{ animationDuration}}s steps({{ frameCount }}) infinite;
+        }
+        @keyframes play {
+            100% { background-position: -{{ spriteWidth }}px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="animation"></div>
+</body>
+</html>

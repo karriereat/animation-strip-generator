@@ -1,0 +1,24 @@
+{
+  "name": "animation-strip-generator",
+  "version": "1.0.0",
+  "description": "A tool for creating sprite animations from image sequences.",
+  "main": "main.js",
+  "scripts": {
+    "start": "./main.js test/input test/output",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "animation-strip-generator": "./main.js"
+  },
+  "author": "Manuel Wieser",
+  "license": "MIT",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "gm": "^1.22.0",
+    "handlebars": "^4.0.5",
+    "imagemin": "^5.2.1",
+    "imagemin-mozjpeg": "^6.0.0",
+    "imagemin-pngquant": "^5.0.0"
+  }
+}
