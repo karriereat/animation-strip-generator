@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-// @todo error handling
-// @todo output files
-// @todo ImageOptim
-// @todo publish
-
 const gm = require('gm');
 
 const fs = require('fs');
@@ -20,14 +15,13 @@ const imagemin = require('imagemin');
 const imageminMozjpeg = require('imagemin-mozjpeg');
 const imageminPngquant = require('imagemin-pngquant');
 
-//noinspection JSValidateTypes
 program
     .arguments('<source> <destination>')
     .description('A tool for creating sprite animations from image sequences.')
-    .option('-n, --name <id>', 'specify animation identifier')
+    .option('-n, --name <name>', 'specify animation identifier')
     .option('-f, --fps <fps>', 'specify frame rate')
     .action((source, destination) => {
-        run(source, destination, program.id, program.fps);
+        run(source, destination, program.name, program.fps);
     })
     .parse(process.argv);
 
@@ -52,12 +46,13 @@ function run(source, _destination, _name, _fps) {
             image.append(file, true);
         });
 
-        let file = destination + '/' + name + path.extname(files[0]);
+        let fileName = name + path.extname(files[0]);
+        let filePath = destination + '/' + fileName;
 
-        image.write(file, (err) => {
+        image.write(filePath, (err) => {
             if (err) throw err;
 
-            imagemin([file], destination, {
+            imagemin([filePath], destination, {
                 plugins: [
                     imageminMozjpeg({
                         quality: 75
@@ -67,7 +62,7 @@ function run(source, _destination, _name, _fps) {
                     })
                 ]
             }).then(() => {
-                console.log(colors.green(`${file} created.`));
+                console.log(colors.green(`${filePath} created.`));
             });
 
         });
@@ -83,7 +78,7 @@ function run(source, _destination, _name, _fps) {
                     frameWidth: size.width,
                     frameHeight: size.height,
                     frameCount: files.length + 1,
-                    file: file,
+                    file: fileName,
                     animationName: name,
                     animationDuration: (files.length + 1) / fps,
                     spriteWidth: size.width * (files.length + 1)

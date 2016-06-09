@@ -4,7 +4,7 @@
   "description": "A tool for creating sprite animations from image sequences.",
   "main": "main.js",
   "scripts": {
-    "start": "./main.js test/input test/output",
+    "start": "./main.js test/input test/output --name bell --fps 30",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
