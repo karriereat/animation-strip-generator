@@ -2,6 +2,8 @@
 'use strict';
 
 const program = require('commander');
+const colors = require('colors');
+
 const generator = require('./generator');
 
 program
@@ -10,7 +12,10 @@ program
     .option('-n, --name <name>', 'specify animation identifier')
     .option('-f, --fps <fps>', 'specify frame rate')
     .action((source, destination) => {
-        generator(source, destination, program.name, program.fps);
+        generator(source, destination, program.name, program.fps).then(
+            (success) => console.log(colors.green(success)),
+            (error) => console.log(colors.red(error))
+        );
     })
     .parse(process.argv);
 

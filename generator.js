@@ -3,101 +3,117 @@ const jimp = require('jimp');
 const fs = require('fs');
 const path = require('path');
 
-const colors = require('colors');
-
 const handlebars = require('handlebars');
 
 const imagemin = require('imagemin');
 const imageminMozjpeg = require('imagemin-mozjpeg');
 const imageminPngquant = require('imagemin-pngquant');
 
-module.exports = function (source, _destination, _name, _fps, callback) {
-    fs.readdir(source, (err, _files) => {
-        if (err) throw err;
+module.exports = function (source, _destination, _name, _fps) {
+    return new Promise((resolve, reject) => {
 
-        let files = _files.filter((file) => {
-            return path.extname(file) === '.png' || path.extname(file) === '.jpg' || path.extname(file) === '.gif';
-        }).map((file) => {
-            return `${source}/${file}`;
-        });
-        console.log(colors.gray(files.join('\n')));
-
-        let destination = _destination || __dirname;
-        let name = _name || 'animation';
-        let fps = parseInt(_fps) || 24;
-
-
-        let promises = files.map((file) => {
-            return jimp.read(file);
-        });
-
-
-        let fileName = name + path.extname(files[0]);
-        let filePath = destination + '/' + fileName;
-
-        Promise.all(promises).then(function (images) {
-
-            let bucket = images[0].clone();
-            bucket.resize(bucket.bitmap.width * images.length, bucket.bitmap.height);
-            for (let i = 0; i < images.length; i++) {
-                bucket.blit(images[i], images[i].bitmap.width * i, 0);
+        fs.readdir(source, (error, _files) => {
+            if (error) {
+                reject(error);
             }
 
-
-            bucket.write(filePath, (err) => {
-                if (err) throw err;
-
-                imagemin([filePath], destination, {
-                    plugins: [
-                        imageminMozjpeg({
-                            quality: 75
-                        }),
-                        imageminPngquant({
-                            quality: '50-75'
-                        })
-                    ]
-                }).then(() => {
-                    console.log(colors.green(`${filePath} created.`));
-                    callback();
-                });
-
+            // Filter the folder for images and prepend the path to all files.
+            let files = _files.filter((file) => {
+                return path.extname(file) === '.png' || path.extname(file) === '.jpg' || path.extname(file) === '.gif';
+            }).map((file) => {
+                return `${source}/${file}`;
             });
 
-        }).catch(function (err) {
-            console.log(err);
-        });
+            // Sanitize input or add missing options.
+            let destination = _destination || __dirname;
+            let name = _name || 'animation';
+            let fps = parseInt(_fps) || 24;
 
+            // What are our output files called?
+            let fileName = name + path.extname(files[0]);
+            let filePath = destination + '/' + fileName;
 
-        jimp.read(files[0]).then(function (image) {
-            let width = image.bitmap.width;
-            let height = image.bitmap.height;
+            // Load all images in JavaScript Image Manipulation Program and return a promise for each.
+            let promises = files.map((file) => {
+                return jimp.read(file);
+            });
 
-            // @todo promise errors?
+            // Start image manipulation as soon as all promises are resolved.
+            Promise.all(promises).then((images) => {
 
-            fs.readFile(`${__dirname}/template.hbs`, 'utf8', (err, data) => {
-                if (err) throw err;
+                // Information needed for various purposes.
+                let width = images[0].bitmap.width;
+                let height = images[0].bitmap.height;
+                let frames = images.length;
 
-                let template = handlebars.compile(data);
-                let view = {
-                    frameWidth: width,
-                    frameHeight: height,
-                    frameCount: files.length,
-                    file: fileName,
-                    animationName: name,
-                    animationDuration: files.length / fps,
-                    spriteWidth: width * files.length
-                };
-                let html = `${destination}/${name}.html`;
+                // This is the pixel bucket for our result.
+                let bucket = images[0].clone();
+                bucket.resize(width * frames, height);
 
-                fs.writeFile(html, template(view), (err) => {
-                    if (err) throw err;
+                let strip = new Promise((resolve, reject) => {
+                    for (let i = 0; i < images.length; i++) {
+                        bucket.blit(images[i], images[i].bitmap.width * i, 0);
+                    }
 
-                    console.log(colors.green(`${html} created.`));
+                    bucket.write(filePath, (error) => {
+                        if (error) {
+                            reject(error);
+                        }
 
+                        // Compress the resulting animation.
+                        imagemin([filePath], destination, {
+                            plugins: [
+                                imageminMozjpeg({
+                                    quality: 75
+                                }),
+                                imageminPngquant({
+                                    quality: '50-75'
+                                })
+                            ]
+                        }).then(() => {
+                            resolve(`${filePath} created.`);
+                        }).catch((error) => {
+                            reject(error);
+                        });
+                    });
                 });
+
+                let styles = new Promise((resolve, reject) => {
+                    fs.readFile(`${__dirname}/template.hbs`, 'utf8', (error, data) => {
+                        if (error) {
+                            reject(error);
+                        }
+
+                        let template = handlebars.compile(data);
+                        let view = {
+                            frameWidth: width,
+                            frameHeight: height,
+                            frameCount: frames,
+                            file: fileName,
+                            animationName: name,
+                            animationDuration: frames / fps,
+                            spriteWidth: width * frames
+                        };
+                        let html = `${destination}/${name}.html`;
+
+                        fs.writeFile(html, template(view), (error) => {
+                            if (error) {
+                                reject(error);
+                            }
+                            resolve(`${html} created.`);
+                        });
+                    });
+                });
+
+                Promise
+                    .all([strip, styles])
+                    .then(messages => resolve(messages.join('\n')))
+                    .catch(errors => reject(errors.join('\n')));
+
+            }).catch((error) => {
+                reject(error);
             });
 
         });
     });
 };
-

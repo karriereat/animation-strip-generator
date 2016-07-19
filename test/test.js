@@ -5,7 +5,7 @@ const generator = require('../generator');
 
 test('generator.js', (t) => {
     t.plan(2);
-    generator('test/animation', 'test/output', 'bell', 30, () => {
+    generator('test/animation', 'test/output', 'bell', 30).then(() => {
         t.equal(
             fs.readFileSync('test/output/bell.png').length,
             fs.readFileSync('test/fixtures/bell.png').length,
