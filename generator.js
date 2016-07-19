@@ -12,7 +12,7 @@ const imageminPngquant = require('imagemin-pngquant');
 module.exports = function (source, _destination, _name, _fps) {
     return new Promise((resolve, reject) => {
 
-        fs.readdir(source, (error, _files) => {
+        fs.readdir(source || __dirname, (error, _files) => {
             if (error) {
                 reject(error);
             }
