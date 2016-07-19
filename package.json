@@ -4,8 +4,8 @@
   "description": "A tool for creating sprite animations from image sequences.",
   "main": "main.js",
   "scripts": {
-    "start": "./main.js test/input test/output --name bell --fps 30",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "./main.js test/animation test/output --name bell --fps 30",
+    "test": "rm test/output/*; tape test/test.js | tap-spec"
   },
   "bin": {
     "animation-strip-generator": "./main.js"
@@ -15,10 +15,14 @@
   "dependencies": {
     "colors": "^1.1.2",
     "commander": "^2.9.0",
-    "gm": "^1.22.0",
     "handlebars": "^4.0.5",
+    "jimp": "^0.2.24",
     "imagemin": "^5.2.1",
     "imagemin-mozjpeg": "^6.0.0",
     "imagemin-pngquant": "^5.0.0"
+  },
+  "devDependencies": {
+    "tap-spec": "^4.1.1",
+    "tape": "^4.6.0"
   }
 }

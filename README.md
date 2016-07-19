@@ -10,27 +10,7 @@ npm install
 npm link
 ```
 
-The tool is not yet published to npm and still under development, so you can either link the binary via `npm link` or directly execute the `main.js` file from this repository.
-
-### Dependencies
-
-The tool depends on GraphicsMagick, so if you plan on using it on a fresh system (e.g. your designers' ginormous Retina iMac) you will have to install the following dependencies on Mac OS X. For Windows users GraphicsMagick offers an installer package.
-
-#### Command Line Tools and GCC
-You can either paste the below command in a terminal or install Xcode via the App Store.
-```
-xcode-select --install
-```
-
-#### Homebrew
-```
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-#### GraphicsMagick
-```
-brew install graphicsmagick
-```
+The tool has not yet been published to npm and is still under development, so you can either link the binary via `npm link` or directly execute the `main.js` file from this repository.
 
 ## Usage
 
