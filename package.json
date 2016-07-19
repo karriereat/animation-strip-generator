@@ -2,7 +2,7 @@
   "name": "animation-strip-generator",
   "version": "1.0.0",
   "description": "A tool for creating sprite animations from image sequences.",
-  "main": "main.js",
+  "main": "generator.js",
   "scripts": {
     "start": "./main.js test/animation test/output --name bell --fps 30",
     "test": "rm test/output/*; tape test/test.js | tap-spec"
