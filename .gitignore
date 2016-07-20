@@ -1,4 +1,3 @@
 npm-debug.log
 node_modules
-test/output/*.html
-test/output/*.png
+test/output/
