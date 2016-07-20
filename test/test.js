@@ -18,3 +18,18 @@ test('generator.js', (t) => {
         );
     });
 });
+
+test('What if the source directory is unavailable?', (t) => {
+    t.plan(3);
+    generator().then(null, message => t.ok(message.length > 42));
+    generator('').then(null, message => t.ok(message.length > 42));
+    generator('yolo').then(null, message => t.ok(message.length > 42));
+});
+
+test('mkdir -p', (t) => {
+    t.plan(2);
+    generator('test/animation', 'test/output/directory').then(() => {
+        t.ok(fs.readFileSync('test/output/directory/animation.html'));
+        t.ok(fs.readFileSync('test/output/directory/animation.png'));
+    });
+});

@@ -2,6 +2,7 @@ const jimp = require('jimp');
 
 const fs = require('fs');
 const path = require('path');
+const mkdirp = require('mkdirp');
 
 const handlebars = require('handlebars');
 
@@ -13,7 +14,8 @@ function generator(source, _destination, _name, _fps) {
     return new Promise((resolveGenerator, rejectGenerator) => {
         fs.readdir(source || __dirname, (error, _files) => {
             if (error) {
-                rejectGenerator(error);
+                rejectGenerator(error.toString());
+                return;
             }
 
             // Filter the folder for images and prepend the path to all files.
@@ -21,6 +23,11 @@ function generator(source, _destination, _name, _fps) {
                 const type = path.extname(file);
                 return type === '.png' || type === '.jpg' || type === '.gif';
             }).map(file => `${source}/${file}`);
+
+            if (!files.length) {
+                rejectGenerator('The specified directory does not contain an image sequence.');
+                return;
+            }
 
             // Sanitize input or add missing options.
             const destination = _destination || __dirname;
@@ -30,6 +37,9 @@ function generator(source, _destination, _name, _fps) {
             // What are our output files called?
             const fileName = name + path.extname(files[0]);
             const filePath = `${destination}/${fileName}`;
+
+            // Create some folders...
+            mkdirp.sync(destination);
 
             // Load all images in jimp and return a promise for each.
             const promises = files.map(file => jimp.read(file));
@@ -52,6 +62,7 @@ function generator(source, _destination, _name, _fps) {
                     bucket.write(filePath, error => {
                         if (error) {
                             reject(error);
+                            return;
                         }
 
                         // Compress the resulting animation.
@@ -75,6 +86,7 @@ function generator(source, _destination, _name, _fps) {
                     fs.readFile(`${__dirname}/template.hbs`, 'utf8', (error, data) => {
                         if (error) {
                             reject(error);
+                            return;
                         }
 
                         const template = handlebars.compile(data);
@@ -92,6 +104,7 @@ function generator(source, _destination, _name, _fps) {
                         fs.writeFile(html, template(view), error => {
                             if (error) {
                                 reject(error);
+                                return;
                             }
                             resolve(`${html} created.`);
                         });
