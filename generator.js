@@ -9,53 +9,47 @@ const imagemin = require('imagemin');
 const imageminMozjpeg = require('imagemin-mozjpeg');
 const imageminPngquant = require('imagemin-pngquant');
 
-module.exports = function (source, _destination, _name, _fps) {
-    return new Promise((resolve, reject) => {
-
+function generator(source, _destination, _name, _fps) {
+    return new Promise((resolveGenerator, rejectGenerator) => {
         fs.readdir(source || __dirname, (error, _files) => {
             if (error) {
-                reject(error);
+                rejectGenerator(error);
             }
 
             // Filter the folder for images and prepend the path to all files.
-            let files = _files.filter((file) => {
-                return path.extname(file) === '.png' || path.extname(file) === '.jpg' || path.extname(file) === '.gif';
-            }).map((file) => {
-                return `${source}/${file}`;
-            });
+            const files = _files.filter(file => {
+                const type = path.extname(file);
+                return type === '.png' || type === '.jpg' || type === '.gif';
+            }).map(file => `${source}/${file}`);
 
             // Sanitize input or add missing options.
-            let destination = _destination || __dirname;
-            let name = _name || 'animation';
-            let fps = parseInt(_fps) || 24;
+            const destination = _destination || __dirname;
+            const name = _name || 'animation';
+            const fps = parseInt(_fps, 10) || 24;
 
             // What are our output files called?
-            let fileName = name + path.extname(files[0]);
-            let filePath = destination + '/' + fileName;
+            const fileName = name + path.extname(files[0]);
+            const filePath = `${destination}/${fileName}`;
 
-            // Load all images in JavaScript Image Manipulation Program and return a promise for each.
-            let promises = files.map((file) => {
-                return jimp.read(file);
-            });
+            // Load all images in jimp and return a promise for each.
+            const promises = files.map(file => jimp.read(file));
 
             // Start image manipulation as soon as all promises are resolved.
-            Promise.all(promises).then((images) => {
-
-                // Information needed for various purposes.
-                let width = images[0].bitmap.width;
-                let height = images[0].bitmap.height;
-                let frames = images.length;
+            Promise.all(promises).then(images => {
+                const width = images[0].bitmap.width;
+                const height = images[0].bitmap.height;
+                const frames = images.length;
 
                 // This is the pixel bucket for our result.
-                let bucket = images[0].clone();
+                const bucket = images[0].clone();
                 bucket.resize(width * frames, height);
 
-                let strip = new Promise((resolve, reject) => {
+                const strip = new Promise((resolve, reject) => {
                     for (let i = 0; i < images.length; i++) {
                         bucket.blit(images[i], images[i].bitmap.width * i, 0);
                     }
 
-                    bucket.write(filePath, (error) => {
+                    bucket.write(filePath, error => {
                         if (error) {
                             reject(error);
                         }
@@ -64,39 +58,38 @@ module.exports = function (source, _destination, _name, _fps) {
                         imagemin([filePath], destination, {
                             plugins: [
                                 imageminMozjpeg({
-                                    quality: 75
+                                    quality: 75,
                                 }),
                                 imageminPngquant({
-                                    quality: '50-75'
-                                })
-                            ]
-                        }).then(() => {
-                            resolve(`${filePath} created.`);
-                        }).catch((error) => {
-                            reject(error);
-                        });
+                                    quality: '50-75',
+                                }),
+                            ],
+                        }).then(
+                            () => resolve(`${filePath} created.`),
+                            error => reject(error)
+                        );
                     });
                 });
 
-                let styles = new Promise((resolve, reject) => {
+                const styles = new Promise((resolve, reject) => {
                     fs.readFile(`${__dirname}/template.hbs`, 'utf8', (error, data) => {
                         if (error) {
                             reject(error);
                         }
 
-                        let template = handlebars.compile(data);
-                        let view = {
+                        const template = handlebars.compile(data);
+                        const view = {
                             frameWidth: width,
                             frameHeight: height,
                             frameCount: frames,
                             file: fileName,
                             animationName: name,
                             animationDuration: frames / fps,
-                            spriteWidth: width * frames
+                            spriteWidth: width * frames,
                         };
-                        let html = `${destination}/${name}.html`;
+                        const html = `${destination}/${name}.html`;
 
-                        fs.writeFile(html, template(view), (error) => {
+                        fs.writeFile(html, template(view), error => {
                             if (error) {
                                 reject(error);
                             }
@@ -105,15 +98,16 @@ module.exports = function (source, _destination, _name, _fps) {
                     });
                 });
 
+                // The generator succeeds when both asynchonous tasks are resolved.
                 Promise
                     .all([strip, styles])
-                    .then(messages => resolve(messages.join('\n')))
-                    .catch(errors => reject(errors.join('\n')));
-
-            }).catch((error) => {
-                reject(error);
+                    .then(
+                        messages => resolveGenerator(messages.join('\n')),
+                        messages => rejectGenerator(messages.join('\n'))
+                    );
             });
-
         });
     });
-};
+}
+
+module.exports = generator;
